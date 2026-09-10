@@ -1,0 +1,45 @@
+name: SHADOW SYSTEM APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar projeto
+        uses: actions/checkout@v4
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Preparar Android SDK
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Configurar Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.4.0'
+
+      - name: Descompactar projeto Android
+        run: |
+          rm -rf buildsrc
+          mkdir buildsrc
+          unzip -q SHADOW_SYSTEM_ANDROID.zip -d buildsrc
+
+      - name: Compilar APK
+        working-directory: buildsrc/SHADOW_SYSTEM_ANDROID
+        run: |
+          gradle assembleDebug --no-daemon
+
+      - name: Disponibilizar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SHADOW-SYSTEM-APK
+          path: buildsrc/SHADOW_SYSTEM_ANDROID/app/build/outputs/apk/debug/app-debug.apk
